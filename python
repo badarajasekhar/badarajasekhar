@@ -1,0 +1,55 @@
+import csv
+from datetime import datetime, timedelta
+
+def read_file(file_name):
+    with open(file_name, mode='r') as file:
+        csv_reader = csv.reader(file)
+        header = next(csv_reader)
+        data = [row for row in csv_reader]
+    return data
+
+def seven_consecutive_days(employee_data):
+    # This function checks if any employee has worked for 7 consecutive days
+    dates_worked = [datetime.strptime(row[5], "%m/%d/%Y") for row in employee_data]
+    dates_worked.sort()
+
+    for i in range(len(dates_worked) - 6):
+        if dates_worked[i + 6] - dates_worked[i] == timedelta(days=6):
+            return True
+    return False
+
+def hours_between_shifts(employee_data):
+    # This function checks if there's less than 10 hours but more than 1 hour between shifts
+    for i in range(len(employee_data) - 1):
+        end_time = datetime.strptime(employee_data[i][3], "%m/%d/%Y %I:%M %p")
+        start_time = datetime.strptime(employee_data[i+1][2], "%m/%d/%Y %I:%M %p")
+        if 1 < (start_time - end_time).total_seconds() / 3600 < 10:
+            return True
+    return False
+
+def worked_more_than_14_hours(employee_data):
+    # This function checks if an employee has worked for more than 14 hours in a single shift
+    for row in employee_data:
+        start_time = datetime.strptime(row[2], "%m/%d/%Y %I:%M %p")
+        end_time = datetime.strptime(row[3], "%m/%d/%Y %I:%M %p")
+        if (end_time - start_time).total_seconds() / 3600 > 14:
+            return True
+    return False
+
+def main():
+    data = read_file("Assignment_Timecard.xlsx - Sheet1.csv")
+    employee_records = {}
+
+    for row in data:
+        emp_id = row[-1]
+        if emp_id not in employee_records:
+            employee_records[emp_id] = [row]
+        else:
+            employee_records[emp_id].append(row)
+
+    for emp_id, records in employee_records.items():
+        if seven_consecutive_days(records) or hours_between_shifts(records) or worked_more_than_14_hours(records):
+            print("Employee:", records[0][-2], "Position:", emp_id)
+
+if __name__ == "__main__":
+    main()
